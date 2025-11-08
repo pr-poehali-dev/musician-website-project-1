@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import ShoppingCart from '@/components/ShoppingCart';
 
 interface Track {
   id: number;
@@ -31,11 +33,20 @@ const blogPosts = [
   { id: 2, title: 'Работа с хором', date: '3 октября 2024', excerpt: 'Особенности написания хоровых партитур и аранжировок...' },
 ];
 
+interface CartItem {
+  id: number;
+  title: string;
+  price: number;
+  category: string;
+}
+
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -70,6 +81,46 @@ export default function Index() {
     }
   };
 
+  const addToCart = (track: Track) => {
+    if (cart.some(item => item.id === track.id)) {
+      toast({
+        title: 'Уже в корзине',
+        description: 'Эта композиция уже добавлена в корзину',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const cartItem: CartItem = {
+      id: track.id,
+      title: track.title,
+      price: track.price,
+      category: getCategoryName(track.category)
+    };
+
+    setCart([...cart, cartItem]);
+    toast({
+      title: 'Добавлено в корзину',
+      description: `"${track.title}" добавлена в корзину`
+    });
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart(cart.filter(item => item.id !== id));
+    toast({
+      title: 'Удалено',
+      description: 'Композиция удалена из корзины'
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    toast({
+      title: 'Корзина очищена',
+      description: 'Все композиции удалены из корзины'
+    });
+  };
+
   const filteredTracks = activeCategory === 'all' 
     ? tracks 
     : tracks.filter(track => track.category === activeCategory);
@@ -93,10 +144,11 @@ export default function Index() {
             <Icon name="Music" size={32} className="text-primary" />
             <h1 className="text-2xl font-bold">Роман Самолетов</h1>
           </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#music" className="text-sm font-medium hover:text-primary transition-colors">Музыка</a>
-            <a href="#blog" className="text-sm font-medium hover:text-primary transition-colors">Блог</a>
-            <a href="#contact" className="text-sm font-medium hover:text-primary transition-colors">Контакты</a>
+          <nav className="flex items-center gap-6">
+            <a href="#music" className="hidden md:block text-sm font-medium hover:text-primary transition-colors">Музыка</a>
+            <a href="#blog" className="hidden md:block text-sm font-medium hover:text-primary transition-colors">Блог</a>
+            <a href="#contact" className="hidden md:block text-sm font-medium hover:text-primary transition-colors">Контакты</a>
+            <ShoppingCart cart={cart} onRemoveFromCart={removeFromCart} onClearCart={clearCart} />
           </nav>
         </div>
       </header>
@@ -176,7 +228,7 @@ export default function Index() {
                       </div>
                     </CardContent>
                     <CardFooter className="gap-2">
-                      <Button className="flex-1">
+                      <Button className="flex-1" onClick={() => addToCart(track)}>
                         <Icon name="ShoppingCart" size={16} className="mr-2" />
                         Купить
                       </Button>

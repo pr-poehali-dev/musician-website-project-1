@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,17 +12,18 @@ interface Track {
   duration: string;
   price: number;
   description: string;
+  audioUrl?: string;
 }
 
 const tracks: Track[] = [
-  { id: 1, title: 'Весёлый ёжик', category: 'children', duration: '2:30', price: 299, description: 'Детская песня о приключениях весёлого ёжика' },
-  { id: 2, title: 'Радуга после дождя', category: 'children', duration: '3:15', price: 299, description: 'Добрая мелодия о красоте природы' },
-  { id: 3, title: 'Осенний вальс', category: 'adult', duration: '4:20', price: 499, description: 'Лирическая композиция об осени' },
-  { id: 4, title: 'Дорога домой', category: 'adult', duration: '3:45', price: 499, description: 'Трогательная песня о возвращении' },
-  { id: 5, title: 'Ave Maria', category: 'choral', duration: '5:30', price: 799, description: 'Хоровая обработка классической молитвы' },
-  { id: 6, title: 'Реквием для хора', category: 'choral', duration: '8:00', price: 899, description: 'Торжественное хоровое произведение' },
-  { id: 7, title: 'Симфония No.1', category: 'orchestral', duration: '12:00', price: 1299, description: 'Оркестровая симфония в 3 частях' },
-  { id: 8, title: 'Концерт для скрипки', category: 'orchestral', duration: '15:30', price: 1499, description: 'Виртуозный скрипичный концерт' },
+  { id: 1, title: 'Весёлый ёжик', category: 'children', duration: '2:30', price: 299, description: 'Детская песня о приключениях весёлого ёжика', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+  { id: 2, title: 'Радуга после дождя', category: 'children', duration: '3:15', price: 299, description: 'Добрая мелодия о красоте природы', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+  { id: 3, title: 'Осенний вальс', category: 'adult', duration: '4:20', price: 499, description: 'Лирическая композиция об осени', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+  { id: 4, title: 'Дорога домой', category: 'adult', duration: '3:45', price: 499, description: 'Трогательная песня о возвращении', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+  { id: 5, title: 'Ave Maria', category: 'choral', duration: '5:30', price: 799, description: 'Хоровая обработка классической молитвы', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
+  { id: 6, title: 'Реквием для хора', category: 'choral', duration: '8:00', price: 899, description: 'Торжественное хоровое произведение', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
+  { id: 7, title: 'Симфония No.1', category: 'orchestral', duration: '12:00', price: 1299, description: 'Оркестровая симфония в 3 частях', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' },
+  { id: 8, title: 'Концерт для скрипки', category: 'orchestral', duration: '15:30', price: 1499, description: 'Виртуозный скрипичный концерт', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
 ];
 
 const blogPosts = [
@@ -32,6 +33,42 @@ const blogPosts = [
 
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setPlayingTrackId(null);
+      });
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const togglePlayPause = (track: Track) => {
+    if (!audioRef.current) return;
+
+    if (playingTrackId === track.id && isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      if (playingTrackId !== track.id) {
+        audioRef.current.src = track.audioUrl || '';
+        setPlayingTrackId(track.id);
+      }
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
 
   const filteredTracks = activeCategory === 'all' 
     ? tracks 
@@ -143,8 +180,13 @@ export default function Index() {
                         <Icon name="ShoppingCart" size={16} className="mr-2" />
                         Купить
                       </Button>
-                      <Button variant="outline" size="icon">
-                        <Icon name="Play" size={16} />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => togglePlayPause(track)}
+                        className={playingTrackId === track.id && isPlaying ? 'bg-primary text-primary-foreground' : ''}
+                      >
+                        <Icon name={playingTrackId === track.id && isPlaying ? 'Pause' : 'Play'} size={16} />
                       </Button>
                     </CardFooter>
                   </Card>

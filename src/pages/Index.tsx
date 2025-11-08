@@ -167,13 +167,10 @@ export default function Index() {
             <div className="inline-flex items-center gap-2 mb-6 music-note">
               <Icon name="Music2" size={40} className="text-accent" />
             </div>
-            <h2 className="text-5xl md:text-7xl font-bold mb-6">
-              Композитор.<br />Создатель мелодий.
+            <h2 className="text-5xl md:text-7xl font-bold mb-8">
+              Сайт музыканта, композитора<br />Романа Самолетова
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-              Музыка для детей и взрослых, хоровые произведения, оркестровые композиции
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center mt-8">
               <Button size="lg" className="text-lg">
                 <Icon name="PlayCircle" size={20} className="mr-2" />
                 Послушать музыку
